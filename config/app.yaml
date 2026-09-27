@@ -1,0 +1,5 @@
+app:
+  name: Climora
+  version: "0.1.0"
+  city: Indore
+  default_hazard: extreme_heat

@@ -1,0 +1,5 @@
+# Per-hazard thresholds. Add a new block here, not a hardcoded value in code,
+# when a new hazard engine is implemented (docs/climate-risk-engine.md).
+extreme_heat:
+  threshold_c: 40
+  duration_days: 3

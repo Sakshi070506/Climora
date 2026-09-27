@@ -1,0 +1,5 @@
+# Every dataset entry needs: source, version, spatial_resolution,
+# temporal_resolution, processing_status (docs/data-provenance.md).
+indore_boundaries:
+  source: TBD
+  version: "0.1"

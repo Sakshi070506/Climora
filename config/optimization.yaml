@@ -1,0 +1,7 @@
+# Objective weights and solver settings. Never hardcode these in optimizer.py.
+default_objective: balanced
+solver: ortools_milp
+weights:
+  risk_reduction: 0.4
+  population_protected: 0.4
+  cost: 0.2

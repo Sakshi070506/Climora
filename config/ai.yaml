@@ -1,0 +1,5 @@
+# LLM API config -- explanation/report generation only. Never used to
+# compute risk, cost, or effectiveness values (AGENTS.md section 2).
+provider: anthropic
+model: claude-sonnet-5
+max_tokens: 1000

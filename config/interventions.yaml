@@ -1,0 +1,6 @@
+# Default cost/resource assumptions per intervention. Versioned via
+# intervention_costs table -- this file seeds initial values only.
+cool_roofs:
+  cost_per_sqm_inr: 250
+urban_trees:
+  cost_per_tree_inr: 1500

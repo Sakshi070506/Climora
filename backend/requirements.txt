@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+pydantic
+geopandas
+rasterio
+shapely
+sqlalchemy
+psycopg2-binary
+ortools
+numpy
+scipy
