@@ -2,7 +2,9 @@
 
 **Intelligent Climate Adaptation Platform — from climate risk to an implementable adaptation plan.**
 
-> Climora doesn't stop at showing a city where climate risk exists. It determines what can be done about it, where, at what cost, how the plan changes under different budgets and futures, and why the system recommends it — with a human planner making the final call at every step.
+> Climora is built for cities that already know they're at risk but don't know what to do about it under real budgets, land, water, and time limits. It computes localized climate risk from real hazard science, runs a constraint-validated optimizer to select a fundable intervention portfolio, lets a planner explore what-if scenarios, and explains every result in plain language — without ever letting an AI invent a risk, cost, or effectiveness number.
+>
+> **AGNITIA'26, 36-Hour National Level Hackathon — Prestige Institute of Engineering Management and Research (PIEMR), Indore.**
 
 ---
 
@@ -20,34 +22,46 @@ A planner (municipal authority, disaster-management officer, urban planner) open
 
 ---
 
-## Architecture (summary)
-
-```
-USER → GIS DECISION CENTER → API / APPLICATION SERVICES
-     → DATA INGESTION & PROCESSING
-     → CLIMATE RISK ENGINE → EXPOSURE + VULNERABILITY
-     → ADAPTATION INTERVENTION ENGINE
-     → RESOURCE & CONSTRAINT MANAGER
-     → OPTIMIZATION ENGINE ⇄ SCENARIO ENGINE
-     → AI EXPLANATION / DECISION SUPPORT
-     → ADAPTATION ACTION PLAN → MONITORING ↺ REASSESSMENT
-```
-
-**Core principle:** scientific models calculate risk; optimization calculates feasible portfolios under real constraints; scenario engines calculate consequences of changed assumptions; AI explains results; humans decide. AI is never the scientific authority that invents or calculates risk values.
-
-Full architecture: `docs/architecture.md`. ADRs: `docs/decisions.md`.
-## Architecture (summary)
+## Architecture
 
 ```mermaid
 flowchart TD
-    A[Climate data] --> B[Risk engine]
-    B --> C[Constrained optimizer]
-    C --> D[AI explanation]
-    D --> E[Action plan]
-    E -.->|monitoring feeds back| B
+    U[Planner] --> GIS[GIS Decision Center]
+    GIS --> API[API / Application Services]
+    API --> ING[Data Ingestion & Processing]
+
+    ING --> HAZ[Hazard / Climate Data]
+    ING --> GEO[Geospatial Data]
+    ING --> SOC[Socioeconomic Data]
+    ING --> INF[Infrastructure Data]
+
+    HAZ --> RISK[Climate Risk Engine]
+    GEO --> RISK
+    SOC --> RISK
+    INF --> RISK
+
+    RISK --> INT[Adaptation Intervention Catalog]
+    INT --> RCM[Resource & Constraint Manager]
+    RCM --> OPT[Portfolio Optimizer]
+    OPT <--> SCN[Scenario Engine]
+
+    OPT --> AI[AI Explanation Engine]
+    SCN --> AI
+    AI --> PLAN[Action Plan]
+    PLAN --> GIS
+
+    PLAN --> MON[Monitoring]
+    MON -.->|reassessment| RCM
+
+    PROV[(Provenance Tracker<br/>REAL / MODELED / DEMO)] -.-> RISK
+    PROV -.-> OPT
+    PROV -.-> PLAN
 ```
 
-**Core principle:** scientific models calculate risk; optimization calculates feasible portfolios under real constraints; AI explains results; humans decide.
+The Optimizer **proposes; it never persists directly.** Every optimizer output passes through a Constraint Validator before it's saved or returned — the only path from "a portfolio was computed" to "a plan exists" is structural, not conventional. The AI Explanation Engine sits downstream of everything: it reads already-persisted structured outputs and explains them, but never computes a risk, cost, or effectiveness value itself.
+
+Full architecture (all 12 components, data flows, ADRs): `docs/architecture.md`. ADRs alone: `docs/decisions.md`.
+
 ---
 
 ## Tech stack
@@ -62,13 +76,22 @@ flowchart TD
 | AI | LLM API — explanation/report generation only, never risk computation |
 | Infrastructure | Docker |
 
+**Config, not code, for anything scientific or financial.** Hazard thresholds (`config/hazards.yaml`), intervention costs (`config/interventions.yaml`), and optimization objective weights (`config/optimization.yaml`) are never hardcoded — changing an assumption is a config edit, not a rewrite.
+
 ---
 
-## MVP scope
+## MVP demo workflow
 
-**Location:** Indore, Madhya Pradesh. **Hazard:** Extreme heat.
+The entire hackathon-critical scope, Indore + extreme heat.
 
-The architecture is built for extensibility (flood, drought, water stress, extreme rainfall, multi-city) via a common hazard-engine abstraction, but the MVP intentionally stays narrow — one city, one hazard, a small curated intervention catalog — to keep every number traceable to real or clearly-marked-modeled data.
+| | Workflow | Modules used | Proves |
+|---|---|---|---|
+| **A** | Ward risk view → constraint-validated plan | Risk Engine → Constraint Manager → Optimizer | A portfolio can never violate a hard budget/land/time limit |
+| **B** | Scenario comparison (e.g. ₹2 crore vs ₹5 crore) | Scenario Engine → Optimizer | Changing one assumption visibly changes the recommended portfolio, with the diff explained |
+| **C** | AI Advisor "why was this selected?" query | AI Explanation Engine | Every explanation is grounded in a structured optimizer/risk output — never a hallucinated number |
+| **D** | Provenance check on any dashboard value | Provenance Tracker | Every value is traceable to a dataset, version, and REAL/MODELED/DEMO tag |
+
+Recommended demo order: **A → B → C**, keep **D** visible throughout (e.g. as a badge/tooltip on every stat).
 
 ---
 
@@ -80,16 +103,16 @@ Climora/
 ├── AGENTS.md               ← context for AI coding agents
 ├── docs/                   ← full architecture, ADRs, per-domain design docs
 │   ├── project-context.md  ← read first
-│   ├── architecture.md     ← locked system design
+│   ├── architecture.md     ← full system design
 │   ├── decisions.md        ← ADRs — don't relitigate
 │   └── ...                 ← climate-risk-engine.md, optimization.md, ai-advisor.md, etc.
-├── backend/                ← FastAPI; domain/ organized by the risk→decision chain
+├── backend/                 ← FastAPI; domain/ organized by the risk→decision chain
 ├── frontend/                ← Next.js dashboards (risk, planner, scenario, advisor, plan, monitoring)
-├── config/                 ← hazards.yaml, interventions.yaml, optimization.yaml, ai.yaml
-├── data/                   ← raw/, processed/, boundaries/, artifacts/
-├── notebooks/               ← exploratory science + optimization validation
-├── scripts/                 ← ingestion, seeding, MVP run scripts
-├── tests/                   ← unit, integration, api, geospatial, risk, optimization, scenarios
+├── config/                  ← hazards.yaml, interventions.yaml, optimization.yaml, ai.yaml
+├── data/                    ← raw/, processed/, boundaries/, artifacts/
+├── notebooks/                ← exploratory science + optimization validation
+├── scripts/                  ← ingestion, seeding, MVP run scripts
+├── tests/                    ← unit, integration, api, geospatial, risk, optimization, scenarios
 ├── docker/
 └── api_testing/
 ```
@@ -116,21 +139,31 @@ Full deployment details: `docs/deployment.md`.
 
 ---
 
-## Data integrity
+## Data integrity & constraint enforcement
 
-Every derived value — risk, exposure, vulnerability, cost, effectiveness — is tagged `REAL`, `MODELED`, or `DEMO` and traceable back through `dataset → processing → model → output` via the Provenance Tracker. Nothing is fabricated; where real data is unavailable, the gap is shown, not filled in silently. See `docs/data-provenance.md`.
+Five enforcement layers, not one:
+
+1. **Ingestion** — every dataset is tagged with source, version, spatial/temporal resolution, and processing status before any domain module can use it.
+2. **Provenance Tracker** — every derived value (risk, exposure, vulnerability, optimization result) references the provenance record(s) it was computed from.
+3. **Data-class tagging** — every derived value carries `REAL`, `MODELED`, or `DEMO`; nothing modeled is ever presented as measured.
+4. **Constraint Validator** — the only path by which an optimizer result is persisted or returned; a portfolio that violates a hard budget/land/water/workforce/time limit is rejected and logged, never rounded or fixed up to pass.
+5. **AI grounding** — the Explanation Engine reads only already-persisted structured outputs; if a question needs a number the data doesn't have, it says so instead of estimating.
+
+A dashboard badge shows the data-class of whatever's on screen, so a planner never mistakes a modeled placeholder for a measured fact. Full detail: `docs/data-provenance.md`.
 
 ---
+
 ## Status
 
 | Phase | State |
 |---|---|
-| Phase 1 — Architecture | Drafted |
-| Phase 2 — Tech/model selection | Drafted |
-| Phase 3 — Documentation | In progress |
-| Phase 4 — Implementation | Not started |
+| Phase 1 — Architecture | **Drafted** — see `docs/architecture.md` |
+| Phase 2 — Tech/model selection | **Drafted** — stack above, config-driven, swappable without a rewrite |
+| Phase 3 — Documentation | **In progress** — this repo |
+| Phase 4 — Implementation | **Not started** |
 
-"Drafted" means the design in `docs/architecture.md` is written and internally consistent — not that it's been reviewed, tested, or frozen. Treat it as a starting point to challenge, not a locked spec.
+"Drafted" means the design is written and internally consistent — not that it's been reviewed, tested, or frozen. Treat it as a starting point to challenge, not a locked spec.
+
 ---
 
 ## Reading order
@@ -140,11 +173,18 @@ If you're new to this codebase:
 1. `AGENTS.md` — if you're an AI session, or skip to step 2 if you're a human.
 2. `docs/project-context.md` — start here, always.
 3. `docs/requirements.md` — MVP scope, Indore/heat boundary.
-4. `docs/architecture.md` — the locked system design.
+4. `docs/architecture.md` — the full system design.
 5. `docs/decisions.md` — why it's built this way (don't relitigate).
 6. Everything else, as needed for the task at hand.
 
-If you're contributing: **never commit directly to `main`.** Branch → implement → test → review diff → commit → push → PR. See `AGENTS.md` §Git boundary for the exact rule when an AI coding agent is doing the implementing.
+If you're contributing: **never commit directly to `main`.** Branch → implement → test → review diff → commit → push → PR — and if an AI coding agent is doing the implementing, it stops after "review diff": it prepares a suggested commit message and never runs `git commit`, `git push`, or opens/merges a PR itself. The human developer performs every Git and PR mutation. See `AGENTS.md` §6 for the exact boundary.
+
+---
+
+## Team
+
+**Team lead:** Sakshi Mishra (Backend, UI/UX, PPT)
+**Team:** Dev Malang (Backend) · Rehan Khan (Frontend) · Minaxi Patidar (Research & Documentation)
 
 ---
 
