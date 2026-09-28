@@ -36,7 +36,18 @@ USER → GIS DECISION CENTER → API / APPLICATION SERVICES
 **Core principle:** scientific models calculate risk; optimization calculates feasible portfolios under real constraints; scenario engines calculate consequences of changed assumptions; AI explains results; humans decide. AI is never the scientific authority that invents or calculates risk values.
 
 Full architecture: `docs/architecture.md`. ADRs: `docs/decisions.md`.
+## Architecture (summary)
 
+```mermaid
+flowchart TD
+    A[Climate data] --> B[Risk engine]
+    B --> C[Constrained optimizer]
+    C --> D[AI explanation]
+    D --> E[Action plan]
+    E -.->|monitoring feeds back| B
+```
+
+**Core principle:** scientific models calculate risk; optimization calculates feasible portfolios under real constraints; AI explains results; humans decide.
 ---
 
 ## Tech stack
@@ -110,16 +121,16 @@ Full deployment details: `docs/deployment.md`.
 Every derived value — risk, exposure, vulnerability, cost, effectiveness — is tagged `REAL`, `MODELED`, or `DEMO` and traceable back through `dataset → processing → model → output` via the Provenance Tracker. Nothing is fabricated; where real data is unavailable, the gap is shown, not filled in silently. See `docs/data-provenance.md`.
 
 ---
-
 ## Status
 
 | Phase | State |
 |---|---|
-| Phase 1 — Architecture | **Locked** |
-| Phase 2 — Tech/model selection | **Locked** |
+| Phase 1 — Architecture | Drafted |
+| Phase 2 — Tech/model selection | Drafted |
 | Phase 3 — Documentation | In progress |
 | Phase 4 — Implementation | Not started |
 
+"Drafted" means the design in `docs/architecture.md` is written and internally consistent — not that it's been reviewed, tested, or frozen. Treat it as a starting point to challenge, not a locked spec.
 ---
 
 ## Reading order
